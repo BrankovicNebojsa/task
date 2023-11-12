@@ -14,12 +14,12 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class JsonPersistence {
+public class JsonPersistenceSingleton {
     private final Lock lock = new ReentrantLock();
     private static JsonArray jsonArray;
-    private static JsonPersistence instance;
+    private static JsonPersistenceSingleton instance;
 
-    private JsonPersistence() {
+    private JsonPersistenceSingleton() {
         try {
             jsonArray = getJsonArrayFromFile();
         } catch (IllegalStateException ex) {
@@ -27,9 +27,9 @@ public class JsonPersistence {
         }
     }
 
-    public static JsonPersistence getInstance() {
+    public static JsonPersistenceSingleton getInstance() {
         if (instance == null) {
-            instance = new JsonPersistence();
+            instance = new JsonPersistenceSingleton();
         }
         return instance;
     }
@@ -69,7 +69,6 @@ public class JsonPersistence {
             FileWriter fw = new FileWriter("json/packets.json");
             BufferedWriter out = new BufferedWriter(fw);
             String json = gson.toJson(jsonArray);
-            System.out.println(json);
             out.write(json);
             out.close();
         } catch (ConcurrentModificationException ex) {
