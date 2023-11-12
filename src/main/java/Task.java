@@ -1,38 +1,35 @@
 import json.JsonPersistence;
+import packet.CancelPacket;
 import packet.DummyPacket;
 import thread.ExecutionThread;
 import thread.PreviousPacketsThread;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.List;
 
 public class Task {
-    private InputStream in;
-    private OutputStream out;
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         Task task = new Task();
-        task.connectWithServer();
-        task.sendFromPreviousSession();
-        task.startThisSession();
+        task.execute();
     }
 
-    private void connectWithServer() {
-        try {
-            Socket socket = new Socket("hermes.plusplus.rs", 4000);
-            in = socket.getInputStream();
-            out = socket.getOutputStream();
-        } catch (IOException e) {
-            System.out.println("Error connecting to server: " + e.getMessage());
+    private void execute() {
+        try (Socket socket = new Socket("hermes.plusplus.rs", 4000);
+             InputStream in = socket.getInputStream();
+             OutputStream out = socket.getOutputStream()) {
+            sendFromPreviousSession(out);
+            startThisSession(in, out);
+        } catch (Exception e) {
+            System.out.println("Error in execute method!" + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    private void sendFromPreviousSession() {
+    private void sendFromPreviousSession(OutputStream out) {
         JsonPersistence jsonPersistence = JsonPersistence.getInstance();
         List<DummyPacket> dummyPackets = jsonPersistence.getPreviousPackets();
         for (DummyPacket dummyPacket : dummyPackets) {
@@ -41,45 +38,65 @@ public class Task {
         }
     }
 
-    private void startThisSession() throws Exception {
-        try {
-            Instant date;
-            int threadNumber = 0;
+    private void startThisSession(InputStream in, OutputStream out) throws Exception {
+        Instant time;
+        int threadNumber = 0;
 
-            while (true) {
-                ++threadNumber;
-                byte[] data = new byte[4];
+        while (true) {
+            ++threadNumber;
+            byte[] data = new byte[4];
 
-                for (int i = 0; i < 4; i++) {
-                    data[i] = (byte) in.read();
-                }
-
-                if (data[0] == 1) {
-                    date = Instant.now(); // uzimam trenutno vreme da bih ga stavio kao atribut dummy paketa
-                    System.out.println("Dummy packet");
-                    byte[] data2 = new byte[12];
-                    for (int i = 0; i < 12; i++) {
-                        data2[i] = (byte) in.read();
-                    }
-                    ExecutionThread executionThread = new ExecutionThread(out, new DummyPacket(data, Arrays.copyOfRange(data2, 0, 4),
-                            Arrays.copyOfRange(data2, 4, 8), Arrays.copyOfRange(data2, 8, 12), date), threadNumber);
-                    executionThread.start();
-                    System.out.println("Main thread created Thread " + threadNumber);
-                } else if (data[0] == 2) {
-                    for (byte b : data) {
-                        System.out.println(b);
-                    }
-                    throw new Exception("Cancel packet!");
-                } else {
-                    throw new Exception("Error! First byte is neither 0 nor 1.");
-                }
+            for (int i = 0; i < 4; i++) {
+                data[i] = (byte) in.read();
             }
-        } catch (IOException e) {
-            System.out.println("Error!" + e.getMessage());
-            throw e;
-        } catch (Exception e) {
-            System.out.println("Error! " + e.getMessage());
-            throw e;
+
+            if (data[0] == 1) {
+                System.out.println("Dummy packet");
+                time = Instant.now(); // uzimam trenutno vreme da bih ga stavio kao atribut dummy paketa
+                DummyPacket dummyPacket = new DummyPacket();
+                dummyPacket.setPacketType(data);
+                dummyPacket.setTimeReceived(time);
+
+                for (int j = 0; j < 3; j++) {
+                    for (int i = 0; i < 4; i++) {
+                        data[i] = (byte) in.read();
+                    }
+                    switch (j) {
+                        case 0:
+                            dummyPacket.setLength(data);
+                            break;
+                        case 1:
+                            dummyPacket.setId(data);
+                            break;
+                        case 2:
+                            dummyPacket.setDelay(data);
+                            break;
+                    }
+                }
+
+                ExecutionThread executionThread = new ExecutionThread(out, dummyPacket, threadNumber);
+                executionThread.start();
+                System.out.println("Main thread created Thread " + threadNumber);
+            } else if (data[0] == 2) {
+                System.out.println("Cancel packet!");
+                CancelPacket cancelPacket = new CancelPacket();
+                cancelPacket.setPacketType(data);
+                for (int j = 0; j < 2; j++) {
+                    for (int i = 0; i < 8; i++) {
+                        data[i] = (byte) in.read();
+                    }
+                    switch (j) {
+                        case 0:
+                            cancelPacket.setLength(data);
+                            break;
+                        case 1:
+                            cancelPacket.setId(data);
+                            break;
+                    }
+                }
+            } else {
+                throw new Exception("Error! First byte is neither 0 nor 1.");
+            }
         }
     }
 }

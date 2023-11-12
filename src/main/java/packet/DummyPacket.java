@@ -13,6 +13,10 @@ public class DummyPacket extends Packet {
     private byte[] delay;
     protected Instant timeReceived;
 
+    public DummyPacket() {
+        super();
+    }
+
     public DummyPacket(JsonObject jsonObject) {
         this.packetType = returnJsonArrayAsBytes(jsonObject.get("packetType").getAsJsonArray());
         this.length = returnJsonArrayAsBytes(jsonObject.get("length").getAsJsonArray());
@@ -21,18 +25,20 @@ public class DummyPacket extends Packet {
         this.timeReceived = getDateFromString(jsonObject.get("timeReceived").getAsString());
     }
 
-    public DummyPacket(byte[] packetType, byte[] length, byte[] id, byte[] delay, Instant timeReceived) {
-        super(packetType, length, id);
-        this.delay = delay;
-        this.timeReceived = timeReceived;
-    }
-
     public byte[] getDelay() {
         return delay;
     }
 
+    public void setDelay(byte[] delay) {
+        this.delay = delay;
+    }
+
     public Instant getTimeReceived() {
         return timeReceived;
+    }
+
+    public void setTimeReceived(Instant timeReceived) {
+        this.timeReceived = timeReceived;
     }
 
     public JsonObject returnAsJsonObject() {

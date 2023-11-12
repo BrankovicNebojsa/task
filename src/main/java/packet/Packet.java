@@ -1,17 +1,11 @@
 package packet;
 
 public abstract class Packet {
-
     protected byte[] packetType;
     protected byte[] length;
     protected byte[] id;
 
     public Packet() {
-    }
-
-    public Packet(byte[] packetType, byte[] length) {
-        this.packetType = packetType;
-        this.length = length;
     }
 
     public Packet(byte[] packetType, byte[] length, byte[] id) {
@@ -24,12 +18,23 @@ public abstract class Packet {
         return packetType;
     }
 
+    public void setPacketType(byte[] packetType) {
+        this.packetType = packetType;
+    }
+
     public byte[] getLength() {
         return length;
+    }
+
+    public void setLength(byte[] length) {
+        this.length = length;
     }
 
     public byte[] getId() {
         return id;
     }
 
+    public void setId(byte[] id) {
+        this.id = id;
+    }
 }
