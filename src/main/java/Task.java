@@ -14,11 +14,6 @@ import java.util.List;
 public class Task {
     private InputStream in;
     private OutputStream out;
-    private final JsonPersistence jsonPersistence;
-
-    public Task() {
-        this.jsonPersistence = new JsonPersistence();
-    }
 
     public static void main(String[] args) throws Exception {
         Task task = new Task();
@@ -38,9 +33,10 @@ public class Task {
     }
 
     private void sendFromPreviousSession() {
+        JsonPersistence jsonPersistence = JsonPersistence.getInstance();
         List<DummyPacket> dummyPackets = jsonPersistence.getPreviousPackets();
         for (DummyPacket dummyPacket : dummyPackets) {
-            PreviousPacketsThread previousPacketsThread = new PreviousPacketsThread(out, dummyPacket, jsonPersistence);
+            PreviousPacketsThread previousPacketsThread = new PreviousPacketsThread(out, dummyPacket);
             previousPacketsThread.start();
         }
     }
@@ -66,7 +62,7 @@ public class Task {
                         data2[i] = (byte) in.read();
                     }
                     ExecutionThread executionThread = new ExecutionThread(out, new DummyPacket(data, Arrays.copyOfRange(data2, 0, 4),
-                            Arrays.copyOfRange(data2, 4, 8), Arrays.copyOfRange(data2, 8, 12), date), threadNumber, jsonPersistence);
+                            Arrays.copyOfRange(data2, 4, 8), Arrays.copyOfRange(data2, 8, 12), date), threadNumber);
                     executionThread.start();
                     System.out.println("Main thread created Thread " + threadNumber);
                 } else if (data[0] == 2) {

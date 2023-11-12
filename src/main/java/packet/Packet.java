@@ -9,6 +9,11 @@ public abstract class Packet {
     public Packet() {
     }
 
+    public Packet(byte[] packetType, byte[] length) {
+        this.packetType = packetType;
+        this.length = length;
+    }
+
     public Packet(byte[] packetType, byte[] length, byte[] id) {
         this.packetType = packetType;
         this.length = length;

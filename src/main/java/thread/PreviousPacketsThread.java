@@ -1,6 +1,7 @@
 package thread;
 
 import json.JsonPersistence;
+import packet.CancelPacket;
 import packet.DummyPacket;
 
 import java.io.IOException;
@@ -13,10 +14,10 @@ public class PreviousPacketsThread extends Thread {
     private final DummyPacket dummyPacket;
     private final JsonPersistence jsonPersistence;
 
-    public PreviousPacketsThread(OutputStream out, DummyPacket dummyPacket, JsonPersistence jsonPersistence) {
+    public PreviousPacketsThread(OutputStream out, DummyPacket dummyPacket) {
         this.out = out;
         this.dummyPacket = dummyPacket;
-        this.jsonPersistence = jsonPersistence;
+        this.jsonPersistence = JsonPersistence.getInstance();
     }
 
     @Override
@@ -26,12 +27,12 @@ public class PreviousPacketsThread extends Thread {
             if (dummyPacket.getTimeReceived().plusSeconds(dummyPacket.getDelay()[0]).isBefore(Instant.now())) {
                 System.out.println("Thread is able to send the packet back to server.");
                 try {
+                    CancelPacket cancelPacket = new CancelPacket(this.dummyPacket.getId());
                     synchronized (out) {
                         System.out.println("Thread is sending the packet back to server.");
-                        out.write(this.dummyPacket.getPacketType());
-                        out.write(this.dummyPacket.getLength());
-                        out.write(this.dummyPacket.getId());
-                        out.write(this.dummyPacket.getDelay());
+                        out.write(cancelPacket.getPacketType());
+                        out.write(cancelPacket.getLength());
+                        out.write(cancelPacket.getId());
                         out.flush();
                     }
                 } catch (IOException ex) {
@@ -45,7 +46,7 @@ public class PreviousPacketsThread extends Thread {
             } else {
                 try {
                     System.out.println("Thread has started sleeping.");
-                    sleep(1000);
+                    sleep(500);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }

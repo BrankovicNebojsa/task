@@ -1,6 +1,7 @@
 package thread;
 
 import json.JsonPersistence;
+import packet.CancelPacket;
 import packet.DummyPacket;
 
 import java.io.IOException;
@@ -13,11 +14,11 @@ public class ExecutionThread extends Thread {
     private final int threadNumber;
     private final JsonPersistence jsonPersistence;
 
-    public ExecutionThread(OutputStream out, DummyPacket dummyPacket, int threadNumber, JsonPersistence jsonPersistence) {
+    public ExecutionThread(OutputStream out, DummyPacket dummyPacket, int threadNumber) {
         this.out = out;
         this.dummyPacket = dummyPacket;
         this.threadNumber = threadNumber;
-        this.jsonPersistence = jsonPersistence;
+        this.jsonPersistence = JsonPersistence.getInstance();
     }
 
     @Override
@@ -30,12 +31,12 @@ public class ExecutionThread extends Thread {
             sleep(this.dummyPacket.getDelay()[0] * 1000);
             System.out.println("Thread " + threadNumber + " has finished sleeping for " + this.dummyPacket.getDelay()[0] + " seconds.");
             System.out.println("Thread " + threadNumber + " is able to send the packet back to server.");
+            CancelPacket cancelPacket = new CancelPacket(this.dummyPacket.getId());
             synchronized (out) {
                 System.out.println("Thread " + threadNumber + " is sending the packet back to server.");
-                out.write(this.dummyPacket.getPacketType());
-                out.write(this.dummyPacket.getLength());
-                out.write(this.dummyPacket.getId());
-                out.write(this.dummyPacket.getDelay());
+                out.write(cancelPacket.getPacketType());
+                out.write(cancelPacket.getLength());
+                out.write(cancelPacket.getId());
                 out.flush();
             }
             System.out.println("Thread " + threadNumber + " has finished sending the packet back to server.");

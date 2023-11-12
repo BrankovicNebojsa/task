@@ -15,14 +15,23 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class JsonPersistence {
-
     private final Lock lock = new ReentrantLock();
     private static JsonArray jsonArray;
+    private static JsonPersistence instance;
 
-    public JsonPersistence() {
-        if (jsonArray == null) {
+    private JsonPersistence() {
+        try {
+            jsonArray = getJsonArrayFromFile();
+        } catch (IllegalStateException ex) {
             jsonArray = new JsonArray();
         }
+    }
+
+    public static JsonPersistence getInstance() {
+        if (instance == null) {
+            instance = new JsonPersistence();
+        }
+        return instance;
     }
 
     public void addToJsonFile(DummyPacket dummyPacket) {
