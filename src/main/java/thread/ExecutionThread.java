@@ -26,40 +26,87 @@ public class ExecutionThread extends Thread {
     @Override
     public void run() {
         if (shouldAddToJson) {
-            System.out.println(this.getName() + " is saving data to json.");
-            jsonPersistenceSingleton.addToJsonFile(dummyPacket);
-            System.out.println(this.getName() + " saved data to json.");
+            executeNewPacket();
+        } else {
+            executePreviousPacket();
         }
+    }
 
+    private void executePreviousPacket() {
         Instant timeAfterDelay = dummyPacket.getTimeReceived().plusSeconds(dummyPacket.getDelay()[0]);
         if (timeAfterDelay.isAfter(Instant.now())) {
-            try {
-                long sleepingDuration = Duration.between(timeAfterDelay, Instant.now()).abs().toMillis();
-                System.out.println(this.getName() + " is sleeping for " + sleepingDuration + " seconds.");
-                sleep(sleepingDuration);
-                System.out.println(this.getName() + " has finished sleeping for " + sleepingDuration + " seconds.");
-            } catch (InterruptedException e) {
-                System.out.println("Error in " + this.getName() + " while sleeping. ");
-                e.printStackTrace();
-            }
+            waitOutTheDelay(timeAfterDelay);
+            sendDummyPacketToServer();
+        } else {
+            sendCancelPacketToServer();
         }
+        removePacketFromJsonFile();
+    }
 
+
+    private void executeNewPacket() {
+        addNewPacketToJsonFile();
+        waitOutTheDelay(dummyPacket.getTimeReceived().plusSeconds(dummyPacket.getDelay()[0]));
+        sendDummyPacketToServer();
+        removePacketFromJsonFile();
+    }
+
+    private void waitOutTheDelay(Instant timeAfterDelay) {
         try {
-            System.out.println(this.getName() + " is able to send the packet back to server.");
+            long sleepingDuration = Duration.between(timeAfterDelay, Instant.now()).abs().toMillis();
+            System.out.println(this.getName() + " is sleeping for " + sleepingDuration + " seconds.");
+            sleep(sleepingDuration);
+            System.out.println(this.getName() + " has finished sleeping for " + sleepingDuration + " seconds.");
+        } catch (InterruptedException e) {
+            System.out.println("Error in " + this.getName() + " while sleeping. ");
+            e.printStackTrace();
+        }
+    }
+
+    private void addNewPacketToJsonFile() {
+        System.out.println(this.getName() + " has started adding packet to json.");
+        jsonPersistenceSingleton.addToJsonFile(dummyPacket);
+        System.out.println(this.getName() + " has finished adding packet to json.");
+    }
+
+    private void removePacketFromJsonFile() {
+        System.out.println(this.getName() + " has started deleting the packet from json.");
+        jsonPersistenceSingleton.removeFromJsonFile(dummyPacket.getId());
+        System.out.println(this.getName() + " has finished deleting the packet from json.");
+    }
+
+    private void sendCancelPacketToServer() {
+        try {
+            System.out.println(this.getName() + " is able to send the cancel packet back to server.");
             CancelPacket cancelPacket = new CancelPacket(dummyPacket.getId());
             synchronized (out) {
-                System.out.println(this.getName() + " is sending the packet back to server.");
+                System.out.println(this.getName() + " is sending the cancel packet back to server.");
                 out.write(cancelPacket.getPacketType());
                 out.write(cancelPacket.getLength());
                 out.write(cancelPacket.getId());
                 out.flush();
             }
-            System.out.println(this.getName() + " has finished sending the packet back to server.");
-            System.out.println(this.getName() + " has started deleting the packet from json file.");
-            jsonPersistenceSingleton.removeFromJsonFile(dummyPacket.getId());
-            System.out.println(this.getName() + " has finished deleting the packet from json file.");
+            System.out.println(this.getName() + " has finished sending the cancel packet back to server.");
         } catch (IOException ex) {
             System.out.println("Error in " + this.getName() + " while trying to write to OutputStream. " + ex.getMessage());
         }
     }
+
+    private void sendDummyPacketToServer() {
+        try {
+            System.out.println(this.getName() + " is able to send the dummy packet back to server.");
+            synchronized (out) {
+                System.out.println(this.getName() + " is sending the dummy packet back to server.");
+                out.write(dummyPacket.getPacketType());
+                out.write(dummyPacket.getLength());
+                out.write(dummyPacket.getId());
+                out.write(dummyPacket.getDelay());
+                out.flush();
+            }
+            System.out.println(this.getName() + " has finished sending the dummy packet back to server.");
+        } catch (IOException ex) {
+            System.out.println("Error in " + this.getName() + " while trying to write to OutputStream. " + ex.getMessage());
+        }
+    }
+
 }

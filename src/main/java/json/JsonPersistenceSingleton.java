@@ -69,6 +69,7 @@ public class JsonPersistenceSingleton {
             FileWriter fw = new FileWriter("json/packets.json");
             BufferedWriter out = new BufferedWriter(fw);
             String json = gson.toJson(jsonArray);
+            System.out.println(json);
             out.write(json);
             out.close();
         } catch (ConcurrentModificationException ex) {
