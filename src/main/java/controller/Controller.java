@@ -15,14 +15,16 @@ import java.util.List;
 public class Controller {
 
     public void execute() {
-        try (Socket socket = new Socket("hermes.plusplus.rs", 4000);
-             InputStream in = socket.getInputStream();
-             OutputStream out = socket.getOutputStream()) {
-            sendFromPreviousSession(out);
-            startThisSession(in, out);
-        } catch (Exception e) {
-            System.out.println("Error in execute method!" + e.getMessage());
-            e.printStackTrace();
+        while(true) {
+            try (Socket socket = new Socket("hermes.plusplus.rs", 4000);
+                 InputStream in = socket.getInputStream();
+                 OutputStream out = socket.getOutputStream()) {
+                sendFromPreviousSession(out);
+                startThisSession(in, out);
+            } catch (Exception e) {
+                System.out.println("Error in execute method!" + e.getMessage());
+                e.printStackTrace();
+            }
         }
     }
 
