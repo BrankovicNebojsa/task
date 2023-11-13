@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-public class DummyPacket extends Packet {
+public class DummyPacket extends AbstractPacket {
 
     private byte[] delay;
     protected Instant timeReceived;
@@ -41,6 +41,7 @@ public class DummyPacket extends Packet {
         this.timeReceived = timeReceived;
     }
 
+    @Override
     public JsonObject returnAsJsonObject() {
         JsonObject jsonObject = new JsonObject();
 
@@ -53,6 +54,7 @@ public class DummyPacket extends Packet {
         return jsonObject;
     }
 
+    @Override
     public JsonArray returnBytesAsJsonArray(byte[] dataBytes) {
         JsonArray jsonArray = new JsonArray();
         for (byte b :
@@ -62,6 +64,7 @@ public class DummyPacket extends Packet {
         return jsonArray;
     }
 
+    @Override
     public byte[] returnJsonArrayAsBytes(JsonArray jsonArray) {
         byte[] dataBytes = new byte[4];
         for (int i = 0; i < 4; i++) {
@@ -70,13 +73,15 @@ public class DummyPacket extends Packet {
         return dataBytes;
     }
 
-    private Instant getDateFromString(String timeReceived) {
+    @Override
+    public Instant getDateFromString(String timeReceived) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss:SSS dd.MM.yyyy");
         LocalDateTime localDateTime = LocalDateTime.parse(timeReceived, dtf);
         return localDateTime.atZone(ZoneId.systemDefault()).toInstant();
     }
 
-    private String getStringFromDate(Instant timeReceived) {
+    @Override
+    public String getStringFromDate(Instant timeReceived) {
         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm:ss:SSS dd.MM.yyyy");
         LocalDateTime localDateTime = LocalDateTime.ofInstant(timeReceived, ZoneId.systemDefault());
         return dtf.format(localDateTime);

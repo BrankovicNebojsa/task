@@ -1,40 +1,20 @@
 package packet;
 
-public abstract class Packet {
-    protected byte[] packetType;
-    protected byte[] length;
-    protected byte[] id;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
-    public Packet() {
-    }
+import java.time.Instant;
 
-    public Packet(byte[] packetType, byte[] length, byte[] id) {
-        this.packetType = packetType;
-        this.length = length;
-        this.id = id;
-    }
+public interface Packet {
 
-    public byte[] getPacketType() {
-        return packetType;
-    }
+     JsonObject returnAsJsonObject();
 
-    public void setPacketType(byte[] packetType) {
-        this.packetType = packetType;
-    }
+     JsonArray returnBytesAsJsonArray(byte[] dataBytes);
 
-    public byte[] getLength() {
-        return length;
-    }
+     byte[] returnJsonArrayAsBytes(JsonArray jsonArray);
 
-    public void setLength(byte[] length) {
-        this.length = length;
-    }
+     Instant getDateFromString(String timeReceived);
 
-    public byte[] getId() {
-        return id;
-    }
+     String getStringFromDate(Instant timeReceived);
 
-    public void setId(byte[] id) {
-        this.id = id;
-    }
 }
