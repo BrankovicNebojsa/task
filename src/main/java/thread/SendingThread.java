@@ -33,14 +33,31 @@ public class SendingThread extends Thread {
 
     private void sendPacketsFromPreviousSession() {
         while (!packetQueue.isEmpty()) {
-            execute();
+            DummyPacket dummyPacket = packetQueue.getFirst();
+            if (isAbleToSend(dummyPacket)) {
+                send(dummyPacket, isFromPreviousSession);
+                removePacketFromJsonFile(dummyPacket);
+                packetQueue.removeFirst();
+            } else {
+                WaitingThread waitingThread = new WaitingThread(out, dummyPacket);
+                waitingThread.start();
+                packetQueue.removeFirst();
+            }
         }
     }
 
     private void sendPacketsFromThisSession() {
         while (true) {
             if (!packetQueue.isEmpty()) {
-                execute();
+                DummyPacket dummyPacket = packetQueue.getFirst();
+                if (isAbleToSend(dummyPacket)) {
+                    send(dummyPacket, isFromPreviousSession);
+                    removePacketFromJsonFile(dummyPacket);
+                    packetQueue.removeFirst();
+                } else {
+                    packetQueue.removeFirst();
+                    addPacketToQueue(dummyPacket);
+                }
             } else {
                 try {
                     sleep(500);
@@ -48,18 +65,6 @@ public class SendingThread extends Thread {
                     e.printStackTrace();
                 }
             }
-        }
-    }
-
-    private void execute() {
-        DummyPacket dummyPacket = packetQueue.getFirst();
-        if (isAbleToSend(dummyPacket)) {
-            send(dummyPacket, isFromPreviousSession);
-            removePacketFromJsonFile(dummyPacket);
-            packetQueue.removeFirst();
-        } else {
-            packetQueue.removeFirst();
-            addPacketToQueue(dummyPacket);
         }
     }
 

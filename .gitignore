@@ -9,6 +9,8 @@ target/
 *.iml
 *.ipr
 
+json/packets.json
+
 ### Eclipse ###
 .apt_generated
 .classpath
