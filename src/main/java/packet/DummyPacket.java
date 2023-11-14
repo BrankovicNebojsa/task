@@ -41,6 +41,10 @@ public class DummyPacket extends AbstractPacket {
         this.timeReceived = timeReceived;
     }
 
+    public Instant getTimeAfterDelay() {
+        return this.getTimeReceived().plusSeconds(this.getDelay()[0]);
+    }
+
     @Override
     public JsonObject returnAsJsonObject() {
         JsonObject jsonObject = new JsonObject();

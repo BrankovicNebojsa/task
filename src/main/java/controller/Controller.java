@@ -3,7 +3,7 @@ package controller;
 import json.JsonPersistenceSingleton;
 import packet.CancelPacket;
 import packet.DummyPacket;
-import thread.ExecutionThread;
+import thread.SendingThread;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,9 +13,14 @@ import java.time.Instant;
 import java.util.List;
 
 public class Controller {
+    private final JsonPersistenceSingleton jsonPersistenceSingleton;
+
+    public Controller() {
+        jsonPersistenceSingleton = JsonPersistenceSingleton.getInstance();
+    }
 
     public void execute() {
-        while(true) {
+        while (true) {
             try (Socket socket = new Socket("hermes.plusplus.rs", 4000);
                  InputStream in = socket.getInputStream();
                  OutputStream out = socket.getOutputStream()) {
@@ -29,15 +34,17 @@ public class Controller {
     }
 
     private void sendFromPreviousSession(OutputStream out) {
-        JsonPersistenceSingleton jsonPersistenceSingleton = JsonPersistenceSingleton.getInstance();
+        SendingThread sendingThread1 = new SendingThread(out, true);
         List<DummyPacket> dummyPackets = jsonPersistenceSingleton.getPreviousPackets();
         for (DummyPacket dummyPacket : dummyPackets) {
-            ExecutionThread executionThread = new ExecutionThread(out, dummyPacket, false);
-            executionThread.start();
+            sendingThread1.addPacketToQueue(dummyPacket);
         }
+        sendingThread1.start();
     }
 
     private void startThisSession(InputStream in, OutputStream out) throws Exception {
+        SendingThread sendingThread2 = new SendingThread(out, false);
+        sendingThread2.start();
         while (true) {
             byte[] data = readBytesFromInputStream(in);
 
@@ -45,10 +52,9 @@ public class Controller {
                 System.out.println("Dummy packet");
                 DummyPacket dummyPacket = fillDummyPacket(in);
                 dummyPacket.setPacketType(data);
-
-                ExecutionThread executionThread = new ExecutionThread(out, dummyPacket, true);
-                executionThread.start();
-                System.out.println("Main thread created " + executionThread.getName());
+                addPacketToJsonFile(dummyPacket);
+                sendingThread2.addPacketToQueue(dummyPacket);
+                System.out.println("Packet with an id: " + dummyPacket.getId()[0] + " was added to sending queue.");
             } else if (data[0] == 2) {
                 System.out.println("Cancel packet!");
                 CancelPacket cancelPacket = fillCancelPacket(in);
@@ -85,5 +91,11 @@ public class Controller {
         cancelPacket.setLength(readBytesFromInputStream(in));
         cancelPacket.setId(readBytesFromInputStream(in));
         return cancelPacket;
+    }
+
+    private void addPacketToJsonFile(DummyPacket dummyPacket) {
+        System.out.println("Packet with an id: " + dummyPacket.getId()[0] + " is being added to json file.");
+        jsonPersistenceSingleton.addToJsonFile(dummyPacket);
+        System.out.println("Packet with an id: " + dummyPacket.getId()[0] + " is added to json file.");
     }
 }

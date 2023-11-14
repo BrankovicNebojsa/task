@@ -1,6 +1,6 @@
 package packet;
 
-public abstract class AbstractPacket implements Packet{
+public abstract class AbstractPacket implements Packet {
     protected byte[] packetType;
     protected byte[] length;
     protected byte[] id;
